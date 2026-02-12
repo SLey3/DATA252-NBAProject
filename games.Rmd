@@ -4,7 +4,7 @@ author:
   - Jerrick Little
   - Sergio Ley Languren
   - Aadem Isai
-  - D'Ante Dean
+  - D'Ante Dea
 date: "2026-02-11"
 output: html_document
 ---
