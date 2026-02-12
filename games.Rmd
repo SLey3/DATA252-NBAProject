@@ -1,6 +1,10 @@
 ---
 title: "ML_project"
-author: "Jerrick Little"
+author:
+  - Jerrick Little
+  - Sergio Ley Languren
+  - Aadem Isai
+  - D'Ante Dean
 date: "2026-02-11"
 output: html_document
 ---
@@ -9,6 +13,10 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(GGally)
+
+setwd("~/Desktop/DATA252/DATA252-NBAProject") # or wherever your project path is located at
+
+DATA_DIR = "./data"
 ```
 
 ## R Markdown
@@ -18,8 +26,8 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 ```{r}
-games = read.csv("C:/Users/jerri/OneDrive/Documents/ML_project/nba_data/Games.csv")
-teams = read.csv("C:/Users/jerri/OneDrive/Documents/ML_project/nba_data/TeamStatistics.csv")
+games = read.csv(paste(DATA_DIR, "/Games.csv", sep = ""))
+teams = read.csv(paste(DATA_DIR, "/TeamStatistics.csv", sep = ""))
 #nrow(games)
 games = games %>%
   filter(gameDateTimeEst >= "2019-07-29 22:00:00") %>%
