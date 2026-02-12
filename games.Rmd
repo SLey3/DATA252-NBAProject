@@ -1,0 +1,78 @@
+---
+title: "ML_project"
+author: "Jerrick Little"
+date: "2026-02-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(GGally)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+games = read.csv("C:/Users/jerri/OneDrive/Documents/ML_project/nba_data/Games.csv")
+teams = read.csv("C:/Users/jerri/OneDrive/Documents/ML_project/nba_data/TeamStatistics.csv")
+#nrow(games)
+games = games %>%
+  filter(gameDateTimeEst >= "2019-07-29 22:00:00") %>%
+  filter(gameType == "Regular Season") %>%
+  mutate(
+    #Positive means home team won
+    point_diff = homeScore - awayScore,
+    total_points = homeScore + awayScore,
+    winner = factor(winner),
+    gameType = factor(gameType),
+    gameSubtype = factor(gameSubtype)
+  )
+games <- games %>%
+  mutate(winner_name = case_when(
+    winner == hometeamId ~ hometeamName,
+    winner == awayteamId ~ awayteamName,
+    TRUE ~ NA_character_
+  ))
+
+teams = teams %>%
+  mutate(point_diff = teamScore - opponentScore)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot_data <- games %>%
+  select(
+    homeScore,        # Numeric response variable
+    attendance,       # Numeric predictor
+    point_diff,     # Numeric predictor
+    winner_name,           # Categorical
+    gameType          # Categorical
+  ) %>%
+  # Remove rows with missing values
+  drop_na()
+
+ggpairs(plot_data, cardinality_threshold = 30,
+        title = "NBA Games Analysis: Pairs Plot",
+        aes(color = winner_name, alpha = 0.5)) +
+  theme(axis.text.x = element_text(angle = 90))+
+  theme_bw()
+#ggpairs(games, columns = c("homeScore", "awayScore", "attendance", "winner", "gameType"))
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+```{r}
+lm(homeScore ~ attendance, data = games, se = FALSE)
+
+lm(seasonWins ~ point_diff, data = teams, se = FALSE)
+
+```
