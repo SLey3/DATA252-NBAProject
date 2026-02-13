@@ -14,9 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(GGally)
 
-setwd("~/Desktop/DATA252/DATA252-NBAProject") # or wherever your project path is located at
+setwd("C:/Users/jerri/OneDrive/Documents/ML_project") # or wherever your project path is located at
 
-DATA_DIR = "./data"
+DATA_DIR = "./nba_data"
 ```
 
 ## R Markdown
@@ -28,7 +28,6 @@ When you click the **Knit** button a document will be generated that includes bo
 ```{r}
 games = read.csv(paste(DATA_DIR, "/Games.csv", sep = ""))
 teams = read.csv(paste(DATA_DIR, "/TeamStatistics.csv", sep = ""))
-#nrow(games)
 games = games %>%
   filter(gameDateTimeEst >= "2019-07-29 22:00:00") %>%
   filter(gameType == "Regular Season") %>%
@@ -46,9 +45,77 @@ games <- games %>%
     winner == awayteamId ~ awayteamName,
     TRUE ~ NA_character_
   ))
-
+# Getting all the regular szn games in teams data
 teams = teams %>%
+  filter(gameDateTimeEst >= "2019-07-29 22:00:00")%>%
+  semi_join(games %>% filter(gameType == "Regular Season"), by = "gameId")%>%
   mutate(point_diff = teamScore - opponentScore)
+
+names(games)
+names(teams)
+
+nba_divs <- data.frame(
+  teamId = c(
+    1610612738, 1610612751, 1610612752, 1610612755, 1610612761,
+
+    1610612741, 1610612739, 1610612765, 1610612754, 1610612749,
+
+    1610612737, 1610612766, 1610612748, 1610612753, 1610612764,
+
+    1610612743, 1610612750, 1610612760, 1610612757, 1610612762,
+
+    1610612744, 1610612746, 1610612747, 1610612756, 1610612758,
+
+    1610612742, 1610612745, 1610612763, 1610612740, 1610612759
+  ),
+  teamName = c(
+  "Celtics", "Nets", "Knicks", "76ers", "Raptors",
+
+    "Bulls", "Cavaliers", "Pistons", "Pacers", "Bucks",
+
+    "Hawks", "Hornets", "Heat", "Magic", "Wizards",
+   "Nuggets", "Timberwolves", "Thunder", "Trail Blazers", "Jazz",
+
+    "Warriors", "Clippers", "Lakers", "Suns", "Kings",
+
+    "Mavericks", "Rockets", "Grizzlies", "Pelicans", "Spurs"
+  ),
+  conference = c(
+    rep("Eastern", 5),
+
+    rep("Eastern", 5),
+
+    rep("Eastern", 5),
+
+    rep("Western", 5),
+
+    rep("Western", 5),
+
+    rep("Western", 5)
+  ),
+  division = c(
+    rep("Atlantic", 5),
+
+    rep("Central", 5),
+
+    rep("Southeast", 5),
+
+    rep("Northwest", 5),
+
+    rep("Pacific", 5),
+
+    rep("Southwest", 5)
+  ),
+  stringsAsFactors = FALSE
+)
+
+teams <- teams %>%
+  left_join(nba_divs %>% select(teamId, conference, division), 
+            by = "teamId")
+teams <- teams %>%
+  left_join(games %>% select(gameId, attendance, winner_name, arenaCity),
+            by = "gameId")
+
 ```
 
 ## Including Plots
@@ -56,23 +123,23 @@ teams = teams %>%
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot_data <- games %>%
+plot_data <- teams %>%
   select(
-    homeScore,        # Numeric response variable
+    teamScore,        # Numeric response variable
     attendance,       # Numeric predictor
-    point_diff,     # Numeric predictor
-    winner_name,           # Categorical
-    gameType          # Categorical
+    win,     # Numeric predictor           # Categorical
+    arenaCity,
+    assists# Categorical
   ) %>%
   # Remove rows with missing values
   drop_na()
 
-ggpairs(plot_data, cardinality_threshold = 30,
+ggpairs(plot_data, cardinality_threshold = 34,
         title = "NBA Games Analysis: Pairs Plot",
-        aes(color = winner_name, alpha = 0.5)) +
+        aes( alpha = 0.5)) +
   theme(axis.text.x = element_text(angle = 90))+
   theme_bw()
-#ggpairs(games, columns = c("homeScore", "awayScore", "attendance", "winner", "gameType"))
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
