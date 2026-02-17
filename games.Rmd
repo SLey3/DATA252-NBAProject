@@ -225,4 +225,6 @@ lm(win ~ assists + turnovers + reboundsTotal + fieldGoalsPercentage, data = team
 lm(opponentScore ~ steals + blocks + reboundsDefensive, data = teams)
 lm(win ~ steals + blocks + reboundsDefensive, data = teams)
 lm(win ~ opponentScore + teamScore, data = teams)
+
+#test
 ```
