@@ -186,6 +186,26 @@ ggpairs(plot_data4, cardinality_threshold = 34,
         aes( alpha = 0.5)) +
   theme(axis.text.x = element_text(angle = 90))+
   theme_bw()
+ggpairs(plot_data5, cardinality_threshold = 34,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
+ggpairs(plot_data6, cardinality_threshold = 34,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
+ggpairs(plot_data7, cardinality_threshold = 34,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
+ggpairs(plot_data8, cardinality_threshold = 34,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
 
 ```
 
@@ -196,5 +216,13 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 lm(homeScore ~ attendance, data = games, se = FALSE)
 
 lm(seasonWins ~ point_diff, data = teams, se = FALSE)
-
+lm(formula = teamScore ~ fieldGoalsPercentage + threePointersPercentage + 
+    freeThrowsPercentage, data = teams)
+lm(teamScore ~ home, data = teams) # Playing at home gives about 2 point increase in team score
+lm(win ~ home + attendance, data = teams) # playing at home teams have on average 54.65% chance of winning, away 45.34... attendance basically zero so not much impact on winning.
+lm(point_diff ~ assists + turnovers + reboundsTotal, data = teams)
+lm(win ~ assists + turnovers + reboundsTotal + fieldGoalsPercentage, data = teams) #- Comprehensive winning model
+lm(opponentScore ~ steals + blocks + reboundsDefensive, data = teams)
+lm(win ~ steals + blocks + reboundsDefensive, data = teams)
+lm(win ~ opponentScore + teamScore, data = teams)
 ```
