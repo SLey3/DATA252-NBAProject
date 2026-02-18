@@ -13,8 +13,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(GGally)
+library(caret)
 
-setwd("C:/Users/jerri/OneDrive/Documents/ML_project/DATA252-NBAProject") # or wherever your project path is located at
+setwd("/Users/aademisai/Desktop/DATA252-NBAProject") # or wherever your project path is located at
 
 DATA_DIR = "./data"
 ```
@@ -164,7 +165,61 @@ plot_data4 <- teams %>%
   ) %>%
   # Remove rows with missing values
   drop_na()
+plot_data5 <- teams %>%
+  select(
+    teamScore,                 # Response variable
+    fieldGoalsPercentage,      # Shooting accuracy
+    threePointersPercentage,   # 3-point shooting
+    freeThrowsPercentage,      # Free throw accuracy
+    win                        # Outcome
+  ) %>%
+  drop_na()
+plot_data6 <- teams %>%
+  select(
+    teamScore,                 # Response variable
+    assists,                   # Ball movement
+    turnovers,                 # Ball security
+    steals,                    # Defensive pressure
+    blocks                     # Rim protection
+  ) %>%
+  drop_na()
+plot_data7 <- teams %>%
+  select(
+    teamScore,                 # Response variable
+    reboundsOffensive,         # Offensive boards
+    reboundsDefensive,         # Defensive boards
+    reboundsTotal,             # Total rebounds
+    pointsSecondChance         # Points off rebounds
+  ) %>%
+  drop_na()
+plot_data8 <- teams %>%
+  select(
+    teamScore,                 # Response variable
+    home,                      # Home/Away indicator
+    attendance,                # Crowd size
+    win,                       # Outcome
+    conference                 # Conference
+  ) %>%
+  drop_na()
+plot_data9 <- teams %>%
+  select(
+    teamScore,                 # Response variable
+    fieldGoalsAttempted,       # Total shots
+    threePointersAttempted,    # 3-point attempts
+    freeThrowsAttempted,       # Free throw attempts
+    fieldGoalsMade             # Made field goals
+  ) %>%
+  drop_na()
 
+plot_data10 <- teams %>%
+  select(
+    teamScore,
+    arenaCity,
+    fieldGoalsPercentage,
+    fieldGoalsMade,
+    win
+  ) %>%
+  drop_na()
 ggpairs(plot_data, cardinality_threshold = 34,
         title = "NBA Games Analysis: Pairs Plot",
         aes( alpha = 0.5)) +
@@ -206,15 +261,92 @@ ggpairs(plot_data8, cardinality_threshold = 34,
          aes( alpha = 0.5)) +
    theme(axis.text.x = element_text(angle = 90))+
    theme_bw()
-
+ggpairs(plot_data9, cardinality_threshold = 34,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
+ggpairs(plot_data10, cardinality_threshold = 35,
+         title = "NBA Games Analysis: Pairs Plot",
+         aes( alpha = 0.5)) +
+   theme(axis.text.x = element_text(angle = 90))+
+   theme_bw()
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
-
+# Part 2 Q3
+- For every one rebound, the point diff will go up .8. By the end of the game, a team will have around 45 rebounds. So the point diff will be around 0.
 ```{r}
-lm(homeScore ~ attendance, data = games, se = FALSE)
+teams_winners <- teams %>%
+ filter(win == 1)
+names(teams_winners)
 
+lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
+summary(lm_mod)
+ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
+  geom_point(alpha = 0.1) +
+  geom_line(aes(y = predict(lm_mod)), color = "blue4", linewidth = 1) +
+  scale_y_continuous(breaks = seq(0, 60, by = 10)) 
+
+
+```
+# Part 2 Q4
+- The slope is .82 for both since they're parallel. The Eastern conference is the reference conference so that intercept is -36.12 and the western conference intercept is -36.12 + .283. They're not far off from each other and basically overlay.
+```{r}
+teams$conference = factor(teams$conference)
+parallel_mod = lm(point_diff ~ fieldGoalsPercentage + conference, data = teams_winners,na.action = na.exclude)
+summary(parallel_mod)
+
+ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff, color = conference)) +
+  geom_point(alpha = 0.2) +
+  geom_line(aes(y = predict(parallel_mod)), alpha = 8, linewidth = 2)
+```
+
+# Part 2 Q 6
+- For the eastern conference, it's -36.13 + .816 * reboundsTotal. The Western conference is (-36.13 + .302) + (.816 - .00043) * reboundsTotal. Again VERY similar lines.
+```{r}
+interaction_mod <- lm(point_diff ~ fieldGoalsPercentage * conference, data = teams_winners, na.action = na.exclude)
+summary(interaction_mod)
+
+ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff, color = conference)) +
+  geom_point(alpha = 0.2) +
+  geom_line(aes(y = predict(interaction_mod)), alpha = 1, linewidth = 2)
+
+```
+# Part 2 Q 7
+- The parallel lines RMSE test has the smallest RMSE with a value of 14.1708. However, all three and honestly, all 6 are SUPER similar. This corresponds with what we saw in our graphs. This is because conference and rebounds don't contribute much to the point differential. All cross validated models are bigger but that makes sense because it wasn't trained on the data like the whole RMSE has been. The whole RMSE tests have already seen every data point.
+```{r}
+teams_clean <- teams_winners[, c("point_diff", "fieldGoalsPercentage", "conference")]
+teams_clean <- na.omit(teams_clean)
+ctrl <- trainControl(method = "cv", number = 10)
+
+simple_cv <- train(point_diff ~ fieldGoalsPercentage, 
+                   data = teams_clean, method = "lm", trControl = ctrl)
+
+parallel_cv <- train(point_diff ~ fieldGoalsPercentage + conference, 
+                     data = teams_clean, method = "lm", trControl = ctrl)
+
+interaction_cv <- train(point_diff ~ fieldGoalsPercentage * conference, 
+                        data = teams_clean, method = "lm", trControl = ctrl)
+
+simple_mod      <- lm(point_diff ~ fieldGoalsPercentage, data = teams_clean)
+parallel_mod    <- lm(point_diff ~ fieldGoalsPercentage + conference, data = teams_clean)
+interaction_mod <- lm(point_diff ~ fieldGoalsPercentage * conference, data = teams_clean)
+
+rmse <- function(model) sqrt(mean(residuals(model)^2))
+
+results <- data.frame(
+  Model      = c("Simple", "Parallel Lines", "Interaction"),
+  RMSE_whole = c(rmse(simple_mod), rmse(parallel_mod), rmse(interaction_mod)),
+  RMSE_cv    = c(simple_cv$results$RMSE, parallel_cv$results$RMSE, interaction_cv$results$RMSE)
+)
+print(results)
+```
+
+# Extra tests vvv
+```{r}
+library(ggplot2)
 lm(seasonWins ~ point_diff, data = teams, se = FALSE)
 lm(formula = teamScore ~ fieldGoalsPercentage + threePointersPercentage + 
     freeThrowsPercentage, data = teams)
@@ -226,5 +358,12 @@ lm(opponentScore ~ steals + blocks + reboundsDefensive, data = teams)
 lm(win ~ steals + blocks + reboundsDefensive, data = teams)
 lm(win ~ opponentScore + teamScore, data = teams)
 
-#test
+
+#very limited data change to Arenacity after logic implemented
+ggplot(teams_winners, aes(x = teamCity, y = point_diff)) +
+  geom_boxplot() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
 ```
