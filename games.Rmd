@@ -291,7 +291,7 @@ names(teams_winners)
 lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
 summary(lm_mod)
 ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
-  geom_point(alpha = 0.1) +
+  geom_point(alpha = 0.05) +
   geom_line(aes(y = predict(lm_mod)), color = "blue4", linewidth = 1) +
   scale_y_continuous(transform = "log10", breaks = seq(0, 60, by = 10)) 
 
