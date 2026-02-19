@@ -47,23 +47,8 @@ games <- games %>%
     TRUE ~ NA_character_
   ))
 # Getting all the regular szn games in teams data
-teams = teams %>%
-  filter(gameDateTimeEst >= "2019-07-29 22:00:00")%>%
-  semi_join(games %>% filter(gameType == "Regular Season"), by = "gameId")%>%
-  mutate(point_diff = teamScore - opponentScore)%>%
-  mutate(arenaCity = case_when(
-    home == 1 ~ teamCity,              # If home, use team's city
-    home == 0 ~ opponentTeamCity,      # If away, use opponent's city
-    TRUE ~ arenaCity                   # Keep existing value if neither (shouldn't happen)
-  ))%>%
-  mutate(arenaCity = case_when(
-    arenaCity == "LA" ~ "LAC",           # LA Clippers
-    arenaCity == "Los Angeles" ~ "LAL",  # LA Lakers
-    TRUE ~ arenaCity                     # Keep all other values
-  ))
 
 names(games)
-names(teams)
 
 nba_divs <- data.frame(
   teamId = c(
@@ -126,6 +111,17 @@ teams <- teams %>%
 teams <- teams %>%
   left_join(games %>% select(gameId, attendance, winner_name, arenaCity),
             by = "gameId")
+
+teams = teams %>%
+  filter(gameDateTimeEst >= "2019-07-29 22:00:00")%>%
+  semi_join(games %>% filter(gameType == "Regular Season"), by = "gameId")%>%
+  mutate(point_diff = teamScore - opponentScore)%>%
+  mutate(arenaCity = case_when(
+    home == 1 ~ teamCity,              # If home, use team's city
+    home == 0 ~ opponentTeamCity,      # If away, use opponent's city
+    TRUE ~ arenaCity                   # Keep existing value if neither (shouldn't happen)
+  ))
+
 names(teams)
 ```
 
@@ -297,8 +293,7 @@ summary(lm_mod)
 ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
   geom_point(alpha = 0.1) +
   geom_line(aes(y = predict(lm_mod)), color = "blue4", linewidth = 1) +
-  scale_y_continuous(breaks = seq(0, 60, by = 10)) 
-
+  scale_y_continuous(transform = "log10", breaks = seq(0, 60, by = 10)) 
 
 ```
 # Part 2 Q4
