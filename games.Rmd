@@ -50,7 +50,12 @@ games <- games %>%
 teams = teams %>%
   filter(gameDateTimeEst >= "2019-07-29 22:00:00")%>%
   semi_join(games %>% filter(gameType == "Regular Season"), by = "gameId")%>%
-  mutate(point_diff = teamScore - opponentScore)
+  mutate(point_diff = teamScore - opponentScore)%>%
+  mutate(arenaCity = case_when(
+    home == 1 ~ teamCity,              # If home, use team's city
+    home == 0 ~ opponentTeamCity,      # If away, use opponent's city
+    TRUE ~ arenaCity                   # Keep existing value if neither (shouldn't happen)
+  ))
 
 names(games)
 names(teams)
