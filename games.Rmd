@@ -4,7 +4,7 @@ author:
   - Jerrick Little
   - Sergio Ley Languren
   - Aadem Isai
-  - D'Ante Dea
+  - D'Ante Dean
 date: "2026-02-11"
 output: html_document
 ---
@@ -55,6 +55,11 @@ teams = teams %>%
     home == 1 ~ teamCity,              # If home, use team's city
     home == 0 ~ opponentTeamCity,      # If away, use opponent's city
     TRUE ~ arenaCity                   # Keep existing value if neither (shouldn't happen)
+  ))%>%
+  mutate(arenaCity = case_when(
+    arenaCity == "LA" ~ "LAC",           # LA Clippers
+    arenaCity == "Los Angeles" ~ "LAL",  # LA Lakers
+    TRUE ~ arenaCity                     # Keep all other values
   ))
 
 names(games)
@@ -322,22 +327,22 @@ ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff, color = conf
 # Part 2 Q 7
 - The parallel lines RMSE test has the smallest RMSE with a value of 14.1708. However, all three and honestly, all 6 are SUPER similar. This corresponds with what we saw in our graphs. This is because conference and rebounds don't contribute much to the point differential. All cross validated models are bigger but that makes sense because it wasn't trained on the data like the whole RMSE has been. The whole RMSE tests have already seen every data point.
 ```{r}
-teams_clean <- teams_winners[, c("point_diff", "fieldGoalsPercentage", "conference")]
+teams_clean <- teams_winners[, c("point_diff", "fieldGoalsPercentage", "benchPoints")]
 teams_clean <- na.omit(teams_clean)
 ctrl <- trainControl(method = "cv", number = 10)
 
 simple_cv <- train(point_diff ~ fieldGoalsPercentage, 
                    data = teams_clean, method = "lm", trControl = ctrl)
 
-parallel_cv <- train(point_diff ~ fieldGoalsPercentage + conference, 
+parallel_cv <- train(point_diff ~ fieldGoalsPercentage + benchPoints, 
                      data = teams_clean, method = "lm", trControl = ctrl)
 
-interaction_cv <- train(point_diff ~ fieldGoalsPercentage * conference, 
+interaction_cv <- train(point_diff ~ fieldGoalsPercentage * benchPoints, 
                         data = teams_clean, method = "lm", trControl = ctrl)
 
 simple_mod      <- lm(point_diff ~ fieldGoalsPercentage, data = teams_clean)
-parallel_mod    <- lm(point_diff ~ fieldGoalsPercentage + conference, data = teams_clean)
-interaction_mod <- lm(point_diff ~ fieldGoalsPercentage * conference, data = teams_clean)
+parallel_mod    <- lm(point_diff ~ fieldGoalsPercentage + benchPoints, data = teams_clean)
+interaction_mod <- lm(point_diff ~ fieldGoalsPercentage * benchPoints, data = teams_clean)
 
 rmse <- function(model) sqrt(mean(residuals(model)^2))
 
@@ -365,10 +370,46 @@ lm(win ~ opponentScore + teamScore, data = teams)
 
 
 #very limited data change to Arenacity after logic implemented
-ggplot(teams_winners, aes(x = teamCity, y = point_diff)) +
+ggplot(teams_winners, aes(x = arenaCity, y = point_diff)) +
   geom_boxplot() + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+cor_matrix <- teams %>%
+  select(point_diff, teamScore, opponentScore, assists, reboundsTotal, 
+         steals, blocks, turnovers, fieldGoalsPercentage, 
+         threePointersPercentage, freeThrowsPercentage, 
+         pointsInThePaint, pointsFastBreak, benchPoints, 
+         attendance, home, win) %>%
+  cor(use = "complete.obs")
 
+# View correlations with point_diff
+cor_matrix[, "point_diff"]
+
+cor_winners <- teams_winners %>%
+  select(point_diff, teamScore, opponentScore, assists, reboundsTotal, 
+         steals, blocks, turnovers, fieldGoalsPercentage, 
+         threePointersPercentage, freeThrowsPercentage, 
+         pointsInThePaint, pointsFastBreak, benchPoints, 
+         attendance, home) %>%
+  cor(use = "complete.obs")
+
+# View correlations with point_diff
+cor_winners[, "point_diff"]
+
+
+comparison <- data.frame(
+  Variable = c("benchPoints", "fieldGoalsPercentage", "teamScore", "opponentScore", 
+               "assists", "pointsFastBreak", "steals", "threePointersPercentage",
+               "pointsInThePaint", "reboundsTotal", "turnovers", "blocks", 
+               "freeThrowsPercentage", "home", "attendance"),
+  All_Teams = c(0.139, 0.556, 0.622, -0.622, 0.413, 0.251, 0.252, 0.378,
+                0.305, 0.331, -0.238, 0.158, 0.085, 0.098, 0),
+  Winners_Only = c(0.417, 0.408, 0.400, -0.468, 0.320, 0.239, 0.266, 0.259,
+                   0.190, 0.128, -0.068, 0.053, 0.053, 0.040, 0.008)
+) %>%
+  mutate(Change = Winners_Only - All_Teams) %>%
+  arrange(desc(abs(Change)))
+
+print(comparison)
 
 ```
