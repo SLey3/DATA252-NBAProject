@@ -478,7 +478,7 @@ cv_gam_rmse <- sapply(folds, function(idx) {
 cv_loess_rmse <- sapply(folds, function(idx) {
   train_data <- teams_winners[-idx, ]
   test_data  <- teams_winners[idx, ]
-  fit <- loess(point_diff ~ fieldGoalsPercentage + assists + reboundsTotal + steals, data = train_data)
+  fit <- loess(point_diff ~ fieldGoalsPercentage + assists + reboundsTotal + pointsInThePaint, data = train_data)
   preds <- predict(fit, newdata = test_data)
   sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
 })
@@ -501,24 +501,20 @@ cv_poly3_rmse <- cv_poly_rmse(3)
 # Summary table
 results <- data.frame(
   Model    = c("Linear (deg 1)", "Quadratic (deg 2)", "Cubic (deg 3)", "LOESS", "GAM"),
-  RMSE_CV  = c(mean(cv_poly1_rmse), mean(cv_poly2_rmse), mean(cv_poly3_rmse),
-               mean(cv_loess_rmse, na.rm = TRUE), mean(cv_gam_rmse)),
-  SD_CV    = c(sd(cv_poly1_rmse), sd(cv_poly2_rmse), sd(cv_poly3_rmse),
-               sd(cv_loess_rmse, na.rm = TRUE), sd(cv_gam_rmse))
+  RMSE_CV  = c(mean(cv_poly1_rmse), mean(cv_poly2_rmse), mean(cv_poly3_rmse), mean(cv_loess_rmse),
+              mean(cv_gam_rmse)),
+  SD_CV    = c(sd(cv_poly1_rmse), sd(cv_poly2_rmse), sd(cv_poly3_rmse), sd(cv_loess_rmse),
+              sd(cv_gam_rmse))
 ) %>%
   mutate(across(where(is.numeric), ~ round(.x, 4))) %>%
   arrange(RMSE_CV)
 
-cv_gam_multi_rmse <- sapply(folds, function(idx) {
-  train_data <- teams_winners[-idx, ]
-  test_data  <- teams_winners[idx, ]
-  fit <- gam(point_diff ~ fieldGoalsPercentage + assists + turnovers + reboundsTotal + steals + pointsInThePaint + freeThrowsPercentage, data = train_data)
-  preds <- predict(fit, newdata = test_data)
-  sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
-})
-
-mean(cv_gam_multi_rmse)
-
 print(results)
 ```
+
+#Part 4
+```{r}
+
+```
+
 
