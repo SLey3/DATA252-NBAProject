@@ -15,7 +15,7 @@ library(tidyverse)
 library(GGally)
 library(caret)
 
-setwd("/Users/jerri/OneDrive/Documents/ML_project/DATA252-NBAProject") # or wherever your project path is located at
+setwd("/Users/sergioleylanguren/Desktop/DATA252/DATA252-NBAProject") # or wherever your project path is located at
 
 DATA_DIR = "./data"
 ```
@@ -277,11 +277,11 @@ ggpairs(plot_data9, cardinality_threshold = 34,
          aes( alpha = 0.5)) +
    theme(axis.text.x = element_text(angle = 90))+
    theme_bw()
-ggpairs(plot_data10, cardinality_threshold = 35,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
+# ggpairs(plot_data10, cardinality_threshold = 35,
+#          title = "NBA Games Analysis: Pairs Plot",
+#          aes( alpha = 0.5)) +
+#    theme(axis.text.x = element_text(angle = 90))+
+#    theme_bw()
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
@@ -551,7 +551,7 @@ caretTree  <-  train(point_diff ~  conference+
                     data = tree_df, 
                     method = "rpart",
                     trControl=trctrl,
-                    tuneGrid = expand.grid(cp=seq(0.001, 0.1, 0.001))
+                    tuneGrid = expand.grid(cp=seq(0.009, 0.1, 0.009))
 )
 
 #Plot the RMSE versus the CP
@@ -561,8 +561,39 @@ plot(caretTree)
 rpart.plot(caretTree$finalModel)
 
 caretTree$finalModel$cptable
-rpart.plot(tree_df)
 glimpse(tree_df)
 ```
 
+
+```{r}
+m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal, data = tree_df)
+
+summary(m_lm)
+```
+```{r}
+caretLLM = train(
+  point_diff ~  conference+
+    fieldGoalsPercentage+
+    threePointersPercentage+
+    freeThrowsPercentage+
+    assists+
+    turnovers+
+    reboundsTotal+
+    home
+    , 
+                    data = teams_winners, 
+                    method = "lm",
+                    trControl=trctrl
+)
+
+summary(caretLLM)
+```
+
+```{r}
+# caret llm rmse
+
+# lm rmse
+
+
+```
 
