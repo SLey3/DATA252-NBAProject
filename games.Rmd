@@ -15,7 +15,7 @@ library(tidyverse)
 library(GGally)
 library(caret)
 
-setwd("/Users/sergioleylanguren/Desktop/DATA252/DATA252-NBAProject") # or wherever your project path is located at
+setwd("/Users/aademisai/Desktop/DATA252-NBAProject") # or wherever your project path is located at
 
 DATA_DIR = "./data"
 ```
@@ -524,7 +524,13 @@ library(rpart.plot)
 set.seed(252)
 
 tree_df <- teams_winners %>%
+  mutate(
+    conference = as.factor(conference),
+    division = as.factor(division)
+  )%>%
   select(
+    steals,
+    blocks,
     point_diff,
     conference,
     division,
@@ -533,6 +539,10 @@ tree_df <- teams_winners %>%
     freeThrowsPercentage,
     assists,
     turnovers,
+    teamScore,
+    opponentScore,
+    benchPoints,
+    opponentTeamName,
     reboundsTotal
   ) %>%
   drop_na()
@@ -540,20 +550,21 @@ tree_df <- teams_winners %>%
 
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
-caretTree  <-  train(point_diff ~  conference+
-    division+
+caretTree  <-  train(point_diff ~
     fieldGoalsPercentage+
-    threePointersPercentage+
-    freeThrowsPercentage+
-    assists+
     turnovers+
+    conference + 
+    division+
+    steals+
+    assists+
     reboundsTotal, 
                     data = tree_df, 
                     method = "rpart",
                     trControl=trctrl,
-                    tuneGrid = expand.grid(cp=seq(0.009, 0.1, 0.009))
+                    tuneGrid = expand.grid(cp = seq(0.0001, 0.05, 0.0005))
 )
 
+  
 #Plot the RMSE versus the CP
 plot(caretTree)
 
@@ -562,6 +573,15 @@ rpart.plot(caretTree$finalModel)
 
 caretTree$finalModel$cptable
 glimpse(tree_df)
+
+ 
+
+## MIN ERROR
+which.min(caretTree$finalModel$cptable[,"xerror"])
+
+## WHICH CP
+caretTree$finalModel$cptable[which.min(caretTree$finalModel$cptable[,"xerror"]),"CP"]
+
 ```
 
 
@@ -570,6 +590,8 @@ m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal, data = tree_df)
 
 summary(m_lm)
 ```
+
+
 ```{r}
 caretLLM = train(
   point_diff ~  conference+
