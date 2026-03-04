@@ -535,6 +535,8 @@ tree_df <- teams_winners %>%
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
 caretTree <- train(point_diff ~
+    conference + 
+    division +
     fieldGoalsPercentage +
     assists +
     steals +
@@ -543,7 +545,7 @@ caretTree <- train(point_diff ~
   data = tree_df, 
   method = "rpart",
   trControl = trctrl,
-  tuneGrid = expand.grid(cp = seq(0.008, 0.2, 0.001))
+  tuneGrid = expand.grid(cp = seq(0.01, 0.2, 0.001))
 )
 
 plot(caretTree)
