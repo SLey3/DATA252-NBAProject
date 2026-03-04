@@ -126,8 +126,11 @@ teams = teams %>%
   mutate(freeThrowsPercentage = freeThrowsMade/freeThrowsAttempted * 100) %>%
   filter(!gameId %in% c(22400988, 22400627))
  
+teams_winners <- teams %>%
+ filter(win == 1) %>%
+ filter(point_diff < 30)
 
-names(teams)
+names(teams_winners)
 ```
 
 ## Including Plots
@@ -135,153 +138,15 @@ names(teams)
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot_data <- teams %>%
-  select(
-    teamScore,        # Numeric response variable
-    attendance,       # Numeric predictor
-    win,     # Numeric predictor           # Categorical
-    arenaCity,
-    assists# Categorical
-  ) %>%
-  # Remove rows with missing values
+plot_data_model <- teams_winners %>%
+  select(point_diff, fieldGoalsPercentage, threePointersPercentage,
+         assists, steals, reboundsTotal) %>%
   drop_na()
 
-plot_data2 <- teams %>%
-  select(
-    teamScore,        # Numeric response variable
-    reboundsTotal,       # Numeric predictor
-    win,     # Numeric predictor           # Categorical
-    arenaCity,
-    fieldGoalsPercentage# Categorical
-  ) %>%
-  # Remove rows with missing values
-  drop_na()
-plot_data3 <- teams %>%
-  select(
-    teamScore,        # Numeric response variable
-    turnovers,       # Numeric predictor
-    win,     # Numeric predictor           # Categorical
-    conference,
-    foulsPersonal# Categorical
-  ) %>%
-  # Remove rows with missing values
-  drop_na()
-plot_data4 <- teams %>%
-  select(
-    teamScore,        # Numeric response variable
-    freeThrowsMade,       # Numeric predictor
-    win,     # Numeric predictor           # Categorical
-    steals,
-    pointsInThePaint# Categorical
-  ) %>%
-  # Remove rows with missing values
-  drop_na()
-plot_data5 <- teams %>%
-  select(
-    teamScore,                 # Response variable
-    fieldGoalsPercentage,      # Shooting accuracy
-    threePointersPercentage,   # 3-point shooting
-    freeThrowsPercentage,      # Free throw accuracy
-    win                        # Outcome
-  ) %>%
-  drop_na()
-plot_data6 <- teams %>%
-  select(
-    teamScore,                 # Response variable
-    assists,                   # Ball movement
-    turnovers,                 # Ball security
-    steals,                    # Defensive pressure
-    blocks                     # Rim protection
-  ) %>%
-  drop_na()
-plot_data7 <- teams %>%
-  select(
-    teamScore,                 # Response variable
-    reboundsOffensive,         # Offensive boards
-    reboundsDefensive,         # Defensive boards
-    reboundsTotal,             # Total rebounds
-    pointsSecondChance         # Points off rebounds
-  ) %>%
-  drop_na()
-plot_data8 <- teams %>%
-  select(
-    teamScore,                 # Response variable
-    home,                      # Home/Away indicator
-    attendance,                # Crowd size
-    win,                       # Outcome
-    conference                 # Conference
-  ) %>%
-  drop_na()
-plot_data9 <- teams %>%
-  select(
-    teamScore,                 # Response variable
-    fieldGoalsAttempted,       # Total shots
-    threePointersAttempted,    # 3-point attempts
-    freeThrowsAttempted,       # Free throw attempts
-    fieldGoalsMade             # Made field goals
-  ) %>%
-  drop_na()
-
-plot_data10 <- teams %>%
-  select(
-    teamScore,
-    arenaCity,
-    fieldGoalsPercentage,
-    fieldGoalsMade,
-    win
-  ) %>%
-  drop_na()
-ggpairs(plot_data, cardinality_threshold = 34,
-        title = "NBA Games Analysis: Pairs Plot",
-        aes( alpha = 0.5)) +
-  theme(axis.text.x = element_text(angle = 90))+
+ggpairs(plot_data_model,
+        title = "Point Differential Model Variables",
+        aes(alpha = 0.5)) +
   theme_bw()
-
-ggpairs(plot_data2, cardinality_threshold = 35,
-        title = "NBA Games Analysis: Pairs Plot",
-        aes( alpha = 0.5)) +
-  theme(axis.text.x = element_text(angle = 90))+
-  theme_bw()
-ggpairs(plot_data3, cardinality_threshold = 34,
-        title = "NBA Games Analysis: Pairs Plot",
-        aes( alpha = 0.5)) +
-  theme(axis.text.x = element_text(angle = 90))+
-  theme_bw()
-ggpairs(plot_data4, cardinality_threshold = 34,
-        title = "NBA Games Analysis: Pairs Plot",
-        aes( alpha = 0.5)) +
-  theme(axis.text.x = element_text(angle = 90))+
-  theme_bw()
-ggpairs(plot_data5, cardinality_threshold = 34,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
-ggpairs(plot_data6, cardinality_threshold = 34,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
-ggpairs(plot_data7, cardinality_threshold = 34,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
-ggpairs(plot_data8, cardinality_threshold = 34,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
-ggpairs(plot_data9, cardinality_threshold = 34,
-         title = "NBA Games Analysis: Pairs Plot",
-         aes( alpha = 0.5)) +
-   theme(axis.text.x = element_text(angle = 90))+
-   theme_bw()
-# ggpairs(plot_data10, cardinality_threshold = 35,
-#          title = "NBA Games Analysis: Pairs Plot",
-#          aes( alpha = 0.5)) +
-#    theme(axis.text.x = element_text(angle = 90))+
-#    theme_bw()
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
@@ -289,11 +154,6 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 # Part 2 Q3
 - For every one rebound, the point diff will go up .8. By the end of the game, a team will have around 45 rebounds. So the point diff will be around 0.
 ```{r}
-teams_winners <- teams %>%
- filter(win == 1) %>%
- filter(point_diff < 30)
-names(teams_winners)
-
 lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
 summary(lm_mod)
 ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
@@ -305,7 +165,7 @@ ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
 # Part 2 Q4
 - The slope is .82 for both since they're parallel. The Eastern conference is the reference conference so that intercept is -36.12 and the western conference intercept is -36.12 + .283. They're not far off from each other and basically overlay.
 ```{r}
-teams$conference = factor(teams$conference)
+teams_winners$conference = factor(teams_winners$conference)
 parallel_mod = lm(point_diff ~ fieldGoalsPercentage + conference, data = teams_winners,na.action = na.exclude)
 summary(parallel_mod)
 
@@ -479,14 +339,14 @@ cv_gam_rmse <- sapply(folds, function(idx) {
   sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
 })
 
-# LOESS Cross Validation
-#cv_loess_rmse <- sapply(folds, function(idx) {
-#  train_data <- teams_winners[-idx, ]
-#  test_data  <- teams_winners[idx, ]
-#  fit <- loess(point_diff ~ fieldGoalsPercentage + assists + reboundsTotal + #pointsInThePaint, data = train_data)
-#  preds <- predict(fit, newdata = test_data)
-#  sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
-#})
+ #LOESS Cross Validation
+cv_loess_rmse <- sapply(folds, function(idx) {
+  train_data <- teams_winners[-idx, ]
+  test_data  <- teams_winners[idx, ]
+  fit <- loess(point_diff ~ fieldGoalsPercentage + assists + reboundsTotal + steals, data = train_data)
+  preds <- predict(fit, newdata = test_data)
+  sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
+})
 
 # POLYNOMIAL Cross Validation
 cv_poly_rmse <- function(degree) {
@@ -505,10 +365,10 @@ cv_poly3_rmse <- cv_poly_rmse(3)
 
 # Summary table
 results <- data.frame(
-  Model    = c("Linear (deg 1)", "Quadratic (deg 2)", "Cubic (deg 3)", "GAM"),
-  RMSE_CV  = c(mean(cv_poly1_rmse), mean(cv_poly2_rmse), mean(cv_poly3_rmse),
+  Model    = c("Linear (deg 1)", "Quadratic (deg 2)", "Cubic (deg 3)","LOESS", "GAM"),
+  RMSE_CV  = c(mean(cv_poly1_rmse), mean(cv_poly2_rmse), mean(cv_poly3_rmse),mean(cv_loess_rmse),
               mean(cv_gam_rmse)),
-  SD_CV    = c(sd(cv_poly1_rmse), sd(cv_poly2_rmse), sd(cv_poly3_rmse),
+  SD_CV    = c(sd(cv_poly1_rmse), sd(cv_poly2_rmse), sd(cv_poly3_rmse),sd(cv_loess_rmse),
               sd(cv_gam_rmse))
 ) %>%
   mutate(across(where(is.numeric), ~ round(.x, 4))) %>%
@@ -561,7 +421,7 @@ length(tree_df$point_diff)
 
 
 ```{r}
-m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal + assists + steals + threePointersPercentage, data = tree_df)
+m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal + assists + steals + threePointersPercentage + conference + division, data = tree_df)
 
 summary(m_lm)
 ```
@@ -569,9 +429,17 @@ summary(m_lm)
 
 ```{r}
 # caret llm rmse
+caretLM <- train(
+  point_diff ~ fieldGoalsPercentage + reboundsTotal + assists + steals + threePointersPercentage + conference + division,
+  data = tree_df,
+  method = "lm",
+  trControl = trctrl
+)
 
-# lm rmse
-
-
+data.frame(
+  Model = c("Tree", "LM (tree vars only)"),
+  RMSE  = c(min(caretTree$results$RMSE), caretLM$results$RMSE),
+  Rsq   = c(caretTree$results$Rsquared[which.min(caretTree$results$RMSE)], caretLM$results$Rsquared)
+)
 ```
 
