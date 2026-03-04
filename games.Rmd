@@ -290,7 +290,8 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 - For every one rebound, the point diff will go up .8. By the end of the game, a team will have around 45 rebounds. So the point diff will be around 0.
 ```{r}
 teams_winners <- teams %>%
- filter(win == 1) 
+ filter(win == 1) %>%
+ filter(point_diff < 30)
 names(teams_winners)
 
 lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
@@ -473,7 +474,7 @@ folds <- createFolds(teams_winners$point_diff, k = 10, list = TRUE)
 cv_gam_rmse <- sapply(folds, function(idx) {
   train_data <- teams_winners[-idx, ]
   test_data  <- teams_winners[idx, ]
-  fit <- gam(point_diff ~ fieldGoalsPercentage + assists + turnovers + reboundsTotal + steals + pointsInThePaint + freeThrowsPercentage, data = train_data)
+  fit <- gam(point_diff ~ fieldGoalsPercentage + assists + turnovers + reboundsTotal + steals + freeThrowsPercentage, data = train_data)
   preds <- predict(fit, newdata = test_data)
   sqrt(mean((test_data$point_diff - preds)^2, na.rm = TRUE))
 })
@@ -527,81 +528,42 @@ tree_df <- teams_winners %>%
   mutate(
     conference = as.factor(conference),
     division = as.factor(division)
-  )%>%
-  select(
-    steals,
-    blocks,
-    point_diff,
-    conference,
-    division,
-    fieldGoalsPercentage,
-    threePointersPercentage,
-    freeThrowsPercentage,
-    assists,
-    turnovers,
-    teamScore,
-    opponentScore,
-    benchPoints,
-    opponentTeamName,
-    reboundsTotal
   ) %>%
-  drop_na()
-
+  select(point_diff, conference, division, fieldGoalsPercentage,
+         threePointersPercentage, assists, steals, reboundsTotal)
 
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
 caretTree <- train(point_diff ~
     fieldGoalsPercentage +
-    conference + 
-    division +
-    steals +
     assists +
-    reboundsTotal, 
+    steals +
+    threePointersPercentage +
+    reboundsTotal,
   data = tree_df, 
   method = "rpart",
   trControl = trctrl,
-  tuneGrid = expand.grid(cp = seq(0.0001, 0.1, 0.0005))
+  tuneGrid = expand.grid(cp = seq(0.008, 0.2, 0.001))
 )
 
-  
-caretTree$bestTune
-caretTree$finalModel$cptable
 plot(caretTree)
+rpart.plot(caretTree$finalModel,
+           fallen.leaves = TRUE,
+           main = "What Drives Winning Point Differential?")
+caretTree$finalModel$cptable
+caretTree$results %>% arrange(RMSE)
 
-## MIN ERROR
-which.min(caretTree$finalModel$cptable[,"xerror"])
-
-## WHICH CP
-caretTree$finalModel$cptable[which.min(caretTree$finalModel$cptable[,"xerror"]),"CP"]
-
+length(teams_winners$point_diff)
+length(tree_df$point_diff)
 ```
 
 
 ```{r}
-m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal, data = tree_df)
+m_lm = lm(point_diff ~ fieldGoalsPercentage + reboundsTotal + assists + steals + threePointersPercentage, data = tree_df)
 
 summary(m_lm)
 ```
 
-
-```{r}
-caretLLM = train(
-  point_diff ~  conference+
-    fieldGoalsPercentage+
-    threePointersPercentage+
-    freeThrowsPercentage+
-    assists+
-    turnovers+
-    reboundsTotal+
-    home
-    , 
-                    data = teams_winners, 
-                    method = "lm",
-                    trControl=trctrl
-)
-
-summary(caretLLM)
-```
 
 ```{r}
 # caret llm rmse
