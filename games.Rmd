@@ -550,31 +550,23 @@ tree_df <- teams_winners %>%
 
 trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 10)
 
-caretTree  <-  train(point_diff ~
-    fieldGoalsPercentage+
-    turnovers+
+caretTree <- train(point_diff ~
+    fieldGoalsPercentage +
     conference + 
-    division+
-    steals+
-    assists+
+    division +
+    steals +
+    assists +
     reboundsTotal, 
-                    data = tree_df, 
-                    method = "rpart",
-                    trControl=trctrl,
-                    tuneGrid = expand.grid(cp = seq(0.0001, 0.05, 0.0005))
+  data = tree_df, 
+  method = "rpart",
+  trControl = trctrl,
+  tuneGrid = expand.grid(cp = seq(0.0001, 0.1, 0.0005))
 )
 
   
-#Plot the RMSE versus the CP
-plot(caretTree)
-
-#Plot the tree with the optimal CP
-rpart.plot(caretTree$finalModel)
-
+caretTree$bestTune
 caretTree$finalModel$cptable
-glimpse(tree_df)
-
- 
+plot(caretTree)
 
 ## MIN ERROR
 which.min(caretTree$finalModel$cptable[,"xerror"])
