@@ -157,13 +157,16 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
 summary(lm_mod)
 ggplot(teams_winners, aes(x = fieldGoalsPercentage, y = point_diff)) +
-  geom_point(alpha = 0.1) +
+  geom_density2d_filled() +
   geom_line(aes(y = predict(lm_mod)), color = "blue4", linewidth = 1) +
   scale_y_continuous(transform = "log10", breaks = seq(0, 60, by = 10)) 
 
 ```
+
+
 # Part 2 Q4
-- The slope is .82 for both since they're parallel. The Eastern conference is the reference conference so that intercept is -36.12 and the western conference intercept is -36.12 + .283. They're not far off from each other and basically overlay.
+The slope is .82 for both since they're parallel. The Eastern conference is the reference conference so that intercept is -36.12 and the western conference intercept is -36.12 + .283. They're not far off from each other and basically overlay.
+
 ```{r}
 teams_winners$conference = factor(teams_winners$conference)
 parallel_mod = lm(point_diff ~ fieldGoalsPercentage + conference, data = teams_winners,na.action = na.exclude)
@@ -377,7 +380,7 @@ results <- data.frame(
 print(results)
 ```
 
-#Part 4
+# Part 4
 ```{r}
 library(caret)
 library(rpart)
@@ -405,7 +408,7 @@ caretTree <- train(point_diff ~
   data = tree_df, 
   method = "rpart",
   trControl = trctrl,
-  tuneGrid = expand.grid(cp = seq(0.01, 0.2, 0.001))
+  tuneGrid = expand.grid(cp = seq(0.003, 0.008, 0.0001))
 )
 
 plot(caretTree)
@@ -441,5 +444,102 @@ data.frame(
   RMSE  = c(min(caretTree$results$RMSE), caretLM$results$RMSE),
   Rsq   = c(caretTree$results$Rsquared[which.min(caretTree$results$RMSE)], caretLM$results$Rsquared)
 )
+
+
+rmodel_comparison <- data.frame(
+  Rank = 1:10,
+  Model = c("GAM", "LM (tree vars only)", "LOESS", "Decision Tree (cp=0.003)",
+            "Cubic (deg 3)", "Linear (deg 1)", "Quadratic (deg 2)",
+            "Interaction Model", "Parallel Lines", "Simple Linear"),
+  RMSE_CV = c(5.9147, 6.0474, 6.1232, 6.4246,
+              6.6682, 6.6726, 6.6735, 6.6760, 6.6851, 6.8550)
+)
+
+rmodel_comparison
 ```
+# Part 5
+
+The GAM model achieved the lowest cross-validation RMSE of 5.9147, outperforming all other models.  There were multiple improvements from the original baseline, the simple linear model, which started at 6.855. GAM brought it down to 5.915, a meaningful reduction.
+
+## Top Candidates
+
+GAM (RMSE = 5.9147): By fitting smooth spline terms to each predictor independently, it showed non-linear relationships that other models may have missed.
+
+LM with tree variables (RMSE = 6.0474): shockingly strong for a simple linear model. The key was variable selection, using only fieldGoalsPercentage, reboundsTotal, assists, steals, and threePointersPercentage outperformed more complex models using fewer, better-chosen predictors to determine winning.
+
+LOESS (RMSE = 6.1232):  smoothing captured curvature well, but without the structured additive framework of GAM, it couldn't quite over top the other models like GAM
+
+## Conclusion (Advantages & Disadvantages)
+
+### Simple Linear Model (RMSE = 6.855):
+
+### Advantages:
+Most interpretable, one coefficient to explain
+
+### Disadvantages:
+Single predictor misses most of the story
+Worst predictive performance of all models
+
+### Parallel Lines & Interaction Models (RMSE ≈ 6.68–6.69)
+
+### Advantages:
+Adds conference/division context
+Still interpretable with clear coefficients
+
+### Disadvantages:
+Conference and division added almost nothing... tree confirmed this by never splitting on them
+Assumes linearity throughout
+
+### Polynomial Regression — Linear, Quadratic, Cubic (RMSE ≈ 6.67)
+
+### Advantages:
+Allows curvature without changing shape of points
+Closed-form, easy to deploy
+
+### Disadvantages:
+All three performed nearly identically 
+Cubic polynomials can behave abnormally at the edges of the data
+
+### LOESS (RMSE = 6.1232)
+
+### Advantages
+Flexible, no distributional assumptions
+Big jump over polynomials, confirming non-linear things are real
+
+### Disadvantages
+Hard to run/deploy, takes AGES
+Doesn't scale well to many predictors (only 4 max predictors)
+
+### LM with Tree Variables (RMSE = 6.0474)
+
+### Advantages:
+Simple and interpretable with R-squared = 0.257
+
+### Disadvantages:
+Still assumes linearity
+Can't capture interaction effects between predictors
+
+### Decision Tree (RMSE = 6.4246)
+
+### Advantages:
+
+Highly interpretable, clear decision rules
+Automatically captures interactions and non-linearity
+Visual output is intuitive for a non-familiar audience
+
+### Disadvantages:
+Unstable, sensitive to cp tuning, small cp changes produced wildly different tree depths
+Under performed the simple LM despite being more complex
+
+### GAM (RMSE = 5.9147):
+
+Best CV RMSE across all models
+Smooth terms adapt to the shape of each predictor's relationship with point differential
+More structured than LOESS
+
+### Disadvantages: 
+Harder to explain to a non-familiar audience than a tree or linear model
+Requires careful tuning of smoothing parameters to avoid over fitting
+
+
 
