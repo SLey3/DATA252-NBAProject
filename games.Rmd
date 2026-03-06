@@ -152,7 +152,7 @@ ggpairs(plot_data_model,
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
 
 # Part 2 Q3
-- For every one rebound, the point diff will go up .8. By the end of the game, a team will have around 45 rebounds. So the point diff will be around 0.
+
 ```{r}
 lm_mod = lm(point_diff ~ fieldGoalsPercentage, data = teams_winners, na.action = na.exclude)
 summary(lm_mod)
@@ -284,14 +284,14 @@ print(comparison)
 
 
 library(caret)
-poly_model <- lm(data = teams_winners, formula = point_diff ~ poly(assists,3))
+poly_model <- lm(data = teams_winners, formula = point_diff ~ poly(fieldGoalsPercentage,20))
 #MAKE A GRAPHIC!
 ggplot(teams_winners, aes(x=assists, y=point_diff))+
  geom_point()+
   geom_path(aes(y=poly_model$fitted.values), color="red2", size =1)+
  ggtitle("Degree 2")
 
-another_model = lm(data = teams_winners, formula = fieldGoalsPercentage ~ assists)
+another_model = lm(data = teams_winners, formula = fieldGoalsPercentage ~ poly(assists,10))
 ggplot(teams_winners, aes(x=assists, y=fieldGoalsPercentage))+
  geom_point()+
   geom_path(aes(y=another_model$fitted.values), color="red2", size =1)+
@@ -451,7 +451,7 @@ rmodel_comparison <- data.frame(
   Model = c("GAM", "LM (tree vars only)", "LOESS", "Decision Tree (cp=0.003)",
             "Cubic (deg 3)", "Linear (deg 1)", "Quadratic (deg 2)",
             "Interaction Model", "Parallel Lines", "Simple Linear"),
-  RMSE_CV = c(5.9147, 6.0474, 6.1232, 6.4246,
+  RMSE_CV = c(5.9147, 6.03685, 6.1232, 6.4246,
               6.6682, 6.6726, 6.6735, 6.6760, 6.6851, 6.8550)
 )
 
