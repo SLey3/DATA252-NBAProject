@@ -304,20 +304,20 @@ summary(another_model)
 
 # GAM and LOESS Models
 library(mgcv)
-mod_gam<-gam(point_diff ~ s(assists), data = teams_winners)
+mod_gam<-gam(point_diff ~ s(fieldGoalsPercentage), data = teams_winners)
 summary(mod_gam)
-loess1<-loess(point_diff ~ assists, data = teams_winners)
+loess1<-loess(point_diff ~ fieldGoalsPercentage, data = teams_winners)
 
 
-ggplot(teams_winners, aes(x=assists, y=point_diff))+
+ggplot(teams_winners, aes(x=fieldGoalsPercentage, y=point_diff))+
   geom_point()+
   geom_line(aes(y=predict(loess1)), color="red", linewidth=1) +
   labs(title = "LOESS PLOT")
 summary(loess1)
 
-mod_gam2<-gam(point_diff ~ s(assists), data = teams_winners)
+mod_gam2<-gam(point_diff ~ s(fieldGoalsPercentage), data = teams_winners)
 
-ggplot(teams_winners, aes(x=assists, y=point_diff))+
+ggplot(teams_winners, aes(x=fieldGoalsPercentage, y=point_diff))+
   geom_point()+
   geom_line(aes(y=mod_gam2$fitted.values), color="red", linewidth=1) +
   labs(title = "GAM PLOT")
